@@ -109,8 +109,7 @@ public class TaskManager {
 
     public void updateEpicStatus(int epicId) {
         Epic epic = epics.get(epicId);
-        if (epic == null) return; // Если эпика нет, ничего не делаем
-
+        if (epic == null) return;
         ArrayList<Subtask> epicSubtasks = getSubtasksByEpicId(epicId);
         if (epicSubtasks.isEmpty()) {
             epic.setStatus(Status.NEW);
