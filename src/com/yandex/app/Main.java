@@ -1,11 +1,14 @@
 package com.yandex.app;
 
 import com.yandex.app.model.*;
+import com.yandex.app.service.Managers;
 import com.yandex.app.service.TaskManager;
+
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        TaskManager manager = new TaskManager();
+        TaskManager manager = Managers.getDefault();
 
         Task task1 = new Task("Jump", "Jump for 10 minutes", Status.NEW);
         Task task2 = new Task("Run", "Run 5km", Status.NEW);
@@ -28,6 +31,28 @@ public class Main {
 
         System.out.println("Initial State");
         printAllTasks(manager);
+
+        // Testing history
+        System.out.println("\nHistory after initialization:");
+        printHistory(manager);
+
+        manager.getTask(task1.getId());
+        System.out.println("\nHistory after viewing task1:");
+        printHistory(manager);
+
+        manager.getEpic(epic1.getId());
+        System.out.println("\nHistory after viewing epic1:");
+        printHistory(manager);
+
+        manager.getSubtask(subtask3.getId());
+        System.out.println("\nHistory after viewing subtask3:");
+        printHistory(manager);
+
+        for (int i = 0; i < 8; i++) {
+            manager.getTask(task2.getId());
+        }
+        System.out.println("\nHistory after viewing task2 eight times:");
+        printHistory(manager);
 
         task1.setStatus(Status.DONE);
         manager.updateTask(task1);
@@ -56,7 +81,6 @@ public class Main {
 
     public static void printAllTasks(TaskManager taskManager) {
         System.out.println("Все задачи:");
-
         for (Task task : taskManager.getAllTasks()) {
             System.out.println(task);
         }
@@ -69,6 +93,19 @@ public class Main {
         System.out.println("Все подзадачи:");
         for (Subtask subtask : taskManager.getAllSubtasks()) {
             System.out.println(subtask);
+        }
+    }
+
+    public static void printHistory(TaskManager taskManager) {
+        List<Task> history = taskManager.getHistory();
+        if (history.isEmpty()) {
+            System.out.println("История просмотров пуста.");
+            return;
+        }
+
+        System.out.println("История просмотров:");
+        for (Task task : history) {
+            System.out.println(task);
         }
     }
 }
