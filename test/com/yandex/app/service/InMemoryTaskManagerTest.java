@@ -83,20 +83,6 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void historyRecordsTasksCorrectly() {
-        Task task = new Task("Task 1", "Description 1", Status.NEW);
-        Epic epic = new Epic("Epic 1", "Description 1");
-        int taskId = taskManager.addTask(task);
-        int epicId = taskManager.addEpic(epic);
-        taskManager.getTask(taskId);
-        taskManager.getEpic(epicId);
-        List<Task> history = taskManager.getHistory();
-        assertEquals(2, history.size(), "History should contain two tasks");
-        assertTrue(history.contains(task), "History should contain task");
-        assertTrue(history.contains(epic), "History should contain epic");
-    }
-
-    @Test
     void epicStatusUpdatesCorrectly() {
         Epic epic = new Epic("Epic 1", "Description 1");
         int epicId = taskManager.addEpic(epic);
@@ -174,5 +160,88 @@ class InMemoryTaskManagerTest {
         assertEquals("Description 2", receivedSubtask.getDescription(), "Subtask description should be updated");
         assertEquals(Status.DONE, receivedSubtask.getStatus(), "Subtask status should be updated");
         assertEquals(Status.DONE, epic.getStatus(), "Epic status should update to DONE with all subtasks DONE");
+    }
+
+    @Test
+    void deleteTaskById_shouldRemoveFromStorageAndHistory() {
+        Task task = new Task("Task 1", "Description 1", Status.NEW);
+        int taskId = taskManager.addTask(task);
+        taskManager.getTask(taskId);
+        taskManager.deleteTaskById(taskId);
+        assertNull(taskManager.getTask(taskId), "Task should be removed from storage");
+        List<Task> history = taskManager.getHistory();
+        assertTrue(history.isEmpty(), "Task should be removed from history");
+    }
+
+    @Test
+    void deleteSubtaskById_shouldRemoveFromStorageHistoryAndEpic() {
+        Epic epic = new Epic("Epic 1", "Description 1");
+        int epicId = taskManager.addEpic(epic);
+        Subtask subtask = new Subtask(epicId, "Subtask 1", "Desc 1", Status.DONE);
+        int subtaskId = taskManager.addSubtask(subtask);
+        taskManager.getSubtask(subtaskId);
+        taskManager.deleteSubtaskById(subtaskId);
+        assertNull(taskManager.getSubtask(subtaskId), "Subtask should be removed from storage");
+        assertFalse(epic.getSubtaskIds().contains(subtaskId), "Subtask ID should be removed from epic");
+        assertEquals(Status.NEW, epic.getStatus(), "Epic status should be NEW after subtask deletion");
+        List<Task> history = taskManager.getHistory();
+        assertTrue(history.isEmpty(), "Subtask should be removed from history");
+    }
+
+    @Test
+    void clearTasks_shouldRemoveAllTasksFromStorageAndHistory() {
+        Task task1 = new Task("Task 1", "Description 1", Status.NEW);
+        Task task2 = new Task("Task 2", "Description 2", Status.NEW);
+        int task1Id = taskManager.addTask(task1);
+        int task2Id = taskManager.addTask(task2);
+        taskManager.getTask(task1Id);
+        taskManager.getTask(task2Id);
+        taskManager.clearTasks();
+        assertTrue(taskManager.getAllTasks().isEmpty(), "All tasks should be removed from storage");
+        assertTrue(taskManager.getHistory().isEmpty(), "All tasks should be removed from history");
+    }
+
+    @Test
+    void clearEpics_shouldRemoveAllEpicsAndSubtasksFromStorageAndHistory() {
+        Epic epic1 = new Epic("Epic 1", "Description 1");
+        int epic1Id = taskManager.addEpic(epic1);
+        Subtask subtask1 = new Subtask(epic1Id, "Subtask 1", "Description 1", Status.NEW);
+        int subtask1Id = taskManager.addSubtask(subtask1);
+        taskManager.getEpic(epic1Id);
+        taskManager.getSubtask(subtask1Id);
+        taskManager.clearEpics();
+        assertTrue(taskManager.getAllEpics().isEmpty(), "All epics should be removed from storage");
+        assertTrue(taskManager.getAllSubtasks().isEmpty(), "All subtasks should be removed from storage");
+        assertTrue(taskManager.getHistory().isEmpty(), "All epics and subtasks should be removed from history");
+    }
+
+    @Test
+    void getSubtasksByEpicId_shouldReturnCorrectSubtasks() {
+        Epic epic = new Epic("Epic 1", "Description 1");
+        int epicId = taskManager.addEpic(epic);
+        Subtask subtask1 = new Subtask(epicId, "Subtask 1", "Desc 1", Status.NEW);
+        Subtask subtask2 = new Subtask(epicId, "Subtask 2", "Desc 2", Status.IN_PROGRESS);
+        int subtask1Id = taskManager.addSubtask(subtask1);
+        int subtask2Id = taskManager.addSubtask(subtask2);
+        List<Subtask> subtasks = taskManager.getSubtasksByEpicId(epicId);
+        assertEquals(2, subtasks.size(), "Should return two subtasks");
+        assertTrue(subtasks.contains(subtask1), "Should contain subtask1");
+        assertTrue(subtasks.contains(subtask2), "Should contain subtask2");
+    }
+
+    @Test
+    void updateTaskWithInvalidId_shouldNotAffectManager() {
+        Task task = new Task("Task 1", "Description 1", Status.NEW);
+        int taskId = taskManager.addTask(task);
+        Task invalidTask = new Task("Task 2", "Description 2", Status.IN_PROGRESS);
+        invalidTask.setId(999);
+        taskManager.updateTask(invalidTask);
+        assertEquals(task, taskManager.getTask(taskId), "Original task should remain unchanged");
+        assertNull(taskManager.getTask(999), "Invalid task ID should not be added");
+
+        invalidTask.setId(-1);
+        taskManager.updateTask(invalidTask);
+        assertEquals(task, taskManager.getTask(taskId), "Original task should remain unchanged");
+        assertNull(taskManager.getTask(-1), "Negative ID should not be added");
     }
 }
