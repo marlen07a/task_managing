@@ -9,6 +9,7 @@ import java.util.Map;
 
 public class InMemoryHistoryManager implements HistoryManager {
     private final Map<Integer, Node> taskIdToNode = new HashMap<>();
+
     private static class Node {
         Task task;
         Node prev;
@@ -20,6 +21,7 @@ public class InMemoryHistoryManager implements HistoryManager {
             this.next = null;
         }
     }
+
     private Node head;
     private Node tail;
 
