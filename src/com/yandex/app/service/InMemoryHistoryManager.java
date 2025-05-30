@@ -15,10 +15,10 @@ public class InMemoryHistoryManager implements HistoryManager {
         Node prev;
         Node next;
 
-        Node(Task task) {
+        Node(Task task, Node prev, Node next) {
             this.task = task;
-            this.prev = null;
-            this.next = null;
+            this.prev = prev;
+            this.next = next;
         }
     }
 
@@ -31,32 +31,27 @@ public class InMemoryHistoryManager implements HistoryManager {
             return;
         }
 
-        remove(task.getId());
+        removeNode(taskIdToNode.remove(task.getId()));
 
-        Node newNode = new Node(task);
-
-        if (tail == null) {
-            head = newNode;
-            tail = newNode;
-        } else {
-            newNode.prev = tail;
-            tail.next = newNode;
-            tail = newNode;
-        }
-
+        Node newNode = linkLast(task);
         taskIdToNode.put(task.getId(), newNode);
+    }
+
+    private Node linkLast(Task task) {
+        Node newNode = new Node(task, tail, null);
+        if (tail != null) {
+            tail.next = newNode;
+        } else {
+            head = newNode;
+        }
+        tail = newNode;
+        return newNode;
     }
 
     @Override
     public void remove(int id) {
-        Node node = taskIdToNode.get(id);
-        if (node == null) {
-            return;
-        }
-
+        Node node = taskIdToNode.remove(id);
         removeNode(node);
-
-        taskIdToNode.remove(id);
     }
 
     private void removeNode(Node node) {
@@ -75,19 +70,20 @@ public class InMemoryHistoryManager implements HistoryManager {
         } else {
             tail = node.prev;
         }
-
-        node.prev = null;
-        node.next = null;
     }
 
     @Override
     public List<Task> getHistory() {
-        List<Task> history = new ArrayList<>();
+        return getTasks();
+    }
+
+    private List<Task> getTasks() {
+        List<Task> tasks = new ArrayList<>();
         Node current = head;
         while (current != null) {
-            history.add(current.task);
+            tasks.add(current.task);
             current = current.next;
         }
-        return history;
+        return tasks;
     }
 }
