@@ -1,8 +1,7 @@
 package com.yandex.app;
 
 import com.yandex.app.model.*;
-import com.yandex.app.service.Managers;
-import com.yandex.app.service.TaskManager;
+import com.yandex.app.service.*;
 
 import java.util.List;
 
@@ -12,71 +11,45 @@ public class Main {
 
         Task task1 = new Task("Jump", "Jump for 10 minutes", Status.NEW);
         Task task2 = new Task("Run", "Run 5km", Status.NEW);
-        manager.addTask(task1);
-        manager.addTask(task2);
+        int task1Id = manager.addTask(task1);
+        int task2Id = manager.addTask(task2);
 
         Epic epic1 = new Epic("Clean", "House cleaning tasks");
-        manager.addEpic(epic1);
+        int epic1Id = manager.addEpic(epic1);
 
-        Subtask subtask1 = new Subtask(epic1.getId(), "Wash clothes", "Do the laundry", Status.NEW);
-        Subtask subtask2 = new Subtask(epic1.getId(), "Vacuum the house", "Clean all rooms", Status.NEW);
-        manager.addSubtask(subtask1);
-        manager.addSubtask(subtask2);
+        Subtask subtask1 = new Subtask(epic1Id, "Wash clothes", "Do the laundry", Status.NEW);
+        Subtask subtask2 = new Subtask(epic1Id, "Vacuum the house", "Clean all rooms", Status.IN_PROGRESS);
+        Subtask subtask3 = new Subtask(epic1Id, "Clean the kitchen", "Wash dishes", Status.DONE);
+        int subtask1Id = manager.addSubtask(subtask1);
+        int subtask2Id = manager.addSubtask(subtask2);
+        int subtask3Id = manager.addSubtask(subtask3);
 
         Epic epic2 = new Epic("Study", "Study related tasks");
-        manager.addEpic(epic2);
+        int epic2Id = manager.addEpic(epic2);
 
-        Subtask subtask3 = new Subtask(epic2.getId(), "Do homework", "Complete math exercises", Status.NEW);
-        manager.addSubtask(subtask3);
-
-        System.out.println("Initial State");
-        printAllTasks(manager);
-
-        // Testing history
-        System.out.println("\nHistory after initialization:");
+        System.out.println("History after accessing task1, epic1, subtask1:");
+        manager.getTask(task1Id);
+        manager.getEpic(epic1Id);
+        manager.getSubtask(subtask1Id);
         printHistory(manager);
 
-        manager.getTask(task1.getId());
-        System.out.println("\nHistory after viewing task1:");
+        System.out.println("History after accessing task2, subtask2, epic2:");
+        manager.getTask(task2Id);
+        manager.getSubtask(subtask2Id);
+        manager.getEpic(epic2Id);
         printHistory(manager);
 
-        manager.getEpic(epic1.getId());
-        System.out.println("\nHistory after viewing epic1:");
+        System.out.println("History after accessing task1 again:");
+        manager.getTask(task1Id);
         printHistory(manager);
 
-        manager.getSubtask(subtask3.getId());
-        System.out.println("\nHistory after viewing subtask3:");
+        System.out.println("History after deleting task1:");
+        manager.deleteTaskById(task1Id);
         printHistory(manager);
 
-        for (int i = 0; i < 8; i++) {
-            manager.getTask(task2.getId());
-        }
-        System.out.println("\nHistory after viewing task2 eight times:");
+        System.out.println("History after deleting epic1 (should remove epic1 and its subtasks):");
+        manager.deleteEpicById(epic1Id);
         printHistory(manager);
-
-        task1.setStatus(Status.DONE);
-        manager.updateTask(task1);
-
-        subtask1.setStatus(Status.DONE);
-        subtask2.setStatus(Status.DONE);
-        manager.updateSubtask(subtask1);
-        manager.updateSubtask(subtask2);
-
-        subtask3.setStatus(Status.IN_PROGRESS);
-        manager.updateSubtask(subtask3);
-
-        System.out.println("\nAfter updating Statuses");
-        printAllTasks(manager);
-
-        manager.deleteTaskById(task2.getId());
-        manager.deleteEpicById(epic2.getId());
-
-        System.out.println("\nAfter deleting a Task and an Epic");
-        printAllTasks(manager);
-
-        manager.clearEpics();
-        System.out.println("\nAfter clearing only Epics");
-        printAllTasks(manager);
     }
 
     public static void printAllTasks(TaskManager taskManager) {
@@ -99,13 +72,13 @@ public class Main {
     public static void printHistory(TaskManager taskManager) {
         List<Task> history = taskManager.getHistory();
         if (history.isEmpty()) {
-            System.out.println("История просмотров пуста.");
+            System.out.println("History is empty");
             return;
         }
 
-        System.out.println("История просмотров:");
         for (Task task : history) {
             System.out.println(task);
         }
+        System.out.println();
     }
 }
