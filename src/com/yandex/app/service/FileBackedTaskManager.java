@@ -19,10 +19,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         }
     }
 
-    private enum TaskType {
-        TASK, EPIC, SUBTASK
-    }
-
     protected void save() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write("id,type,name,status,description,epic\n");
@@ -44,18 +40,9 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     private String toString(Task task) {
-        String type;
-        String epicId = "";
-        if (task instanceof Epic) {
-            type = TaskType.EPIC.name();
-        } else if (task instanceof Subtask) {
-            type = TaskType.SUBTASK.name();
-            epicId = String.valueOf(((Subtask) task).getEpicId());
-        } else {
-            type = TaskType.TASK.name();
-        }
+        String epicId = task instanceof Subtask ? String.valueOf(((Subtask) task).getEpicId()) : "";
         return String.format("%d,%s,%s,%s,%s,%s",
-                task.getId(), type, task.getName(), task.getStatus(), task.getDescription(), epicId);
+                task.getId(), task.getType().name(), task.getName(), task.getStatus(), task.getDescription(), epicId);
     }
 
     private Task fromString(String value) {
