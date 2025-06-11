@@ -6,8 +6,13 @@ import com.yandex.app.model.*;
 import java.io.*;
 import java.nio.file.Files;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class FileBackedTaskManager extends InMemoryTaskManager {
     private final File file;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     public FileBackedTaskManager(File file) {
         this.file = file;
@@ -41,8 +46,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     private String toString(Task task) {
         String epicId = task instanceof Subtask ? String.valueOf(((Subtask) task).getEpicId()) : "";
-        return String.format("%d,%s,%s,%s,%s,%s",
-                task.getId(), task.getType().name(), task.getName(), task.getStatus(), task.getDescription(), epicId);
+        String duration = task.getDuration() != null ? String.valueOf(task.getDuration().toMinutes()) : "";
+        String startTime = task.getStartTime() != null ? task.getStartTime().format(FORMATTER) : "";
+        return String.format("%d,%s,%s,%s,%s,%s,%s,%s",
+                task.getId(), task.getType().name(), task.getName(), task.getStatus(), task.getDescription(), duration, epicId, startTime);
     }
 
     private Task fromString(String value) {
@@ -52,15 +59,17 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         String name = parts[2];
         Status status = Status.valueOf(parts[3]);
         String description = parts[4];
+        Duration duration = parts[5].isEmpty() ? null : Duration.ofMinutes(Long.parseLong(parts[5]));
+        int epicId = type == TaskType.SUBTASK ? Integer.parseInt(parts[6]) : 0;
+        LocalDateTime startTime = parts.length > 7 && !parts[7].isEmpty() ? LocalDateTime.parse(parts[7], FORMATTER) : null;
 
         switch (type) {
             case TASK:
-                return new Task(id, name, description, status);
+                return new Task(id, name, description, status, duration, startTime);
             case EPIC:
                 return new Epic(id, name, description);
             case SUBTASK:
-                int epicId = Integer.parseInt(parts[5]);
-                return new Subtask(epicId, id, name, description, status);
+                return new Subtask(epicId, id, name, description, status, duration, startTime);
             default:
                 throw new IllegalArgumentException("Unknown task type: " + type);
         }
@@ -68,6 +77,9 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     public static FileBackedTaskManager loadFromFile(File file) {
         FileBackedTaskManager manager = new FileBackedTaskManager(file);
+        if (!file.exists() || file.length() == 0) {
+            return manager;
+        }
         try {
             String content = Files.readString(file.toPath());
             String[] lines = content.split("\n");
@@ -170,14 +182,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         File file = File.createTempFile("tasks", ".csv");
         FileBackedTaskManager manager = new FileBackedTaskManager(file);
 
-        Task task1 = new Task("Task1", "Description task1", Status.NEW);
+        Task task1 = new Task("Task1", "Description task1", Status.NEW, Duration.ofMinutes(60), LocalDateTime.now());
         Epic epic1 = new Epic("Epic1", "Description epic1");
-        Subtask subtask1 = new Subtask(0, "Subtask1", "Description subtask1", Status.DONE);
+        int epic1Id = manager.addEpic(epic1);
+        Subtask subtask1 = new Subtask(epic1Id, "Subtask1", "Description subtask1", Status.DONE, Duration.ofMinutes(30), LocalDateTime.now().plusHours(2));
+
 
         int task1Id = manager.addTask(task1);
-        int epic1Id = manager.addEpic(epic1);
-        subtask1 = new Subtask(epic1Id, "Subtask1", "Description subtask1", Status.DONE);
-        manager.addSubtask(subtask1);
+        int subtask1Id = manager.addSubtask(subtask1);
 
         System.out.println("Original manager tasks:");
         Main.printAllTasks(manager);

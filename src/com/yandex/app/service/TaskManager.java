@@ -4,6 +4,7 @@ import com.yandex.app.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskManager {
     int addTask(Task task);
@@ -18,11 +19,11 @@ public interface TaskManager {
 
     void updateSubtask(Subtask subtask);
 
-    Task getTask(int id);
+    Optional<Task> getTask(int id);
 
-    Subtask getSubtask(int id);
+    Optional<Subtask> getSubtask(int id);
 
-    Epic getEpic(int id);
+    Optional<Epic> getEpic(int id);
 
     void deleteTaskById(int id);
 
@@ -45,4 +46,6 @@ public interface TaskManager {
     void clearEpics();
 
     List<Task> getHistory();
+
+    List<Task> getPrioritizedTasks();
 }
