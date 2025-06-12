@@ -1,13 +1,15 @@
 package com.yandex.app.service;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.yandex.app.model.Task;
 import com.yandex.app.model.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class InMemoryHistoryManagerTest {
     private HistoryManager historyManager;
@@ -18,10 +20,11 @@ class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void addMultipleTasks_shouldMaintainOrder() {
-        Task task1 = new Task(1, "Task 1", "Description 1", Status.NEW);
-        Task task2 = new Task(2, "Task 2", "Description 2", Status.IN_PROGRESS);
-        Task task3 = new Task(3, "Task 3", "Description 3", Status.DONE);
+    void testAddMultipleTasks() {
+        LocalDateTime now = LocalDateTime.now();
+        Task task1 = new Task(1, "Task 1", "Description 1", Status.NEW, Duration.ofMinutes(30), now);
+        Task task2 = new Task(2, "Task 2", "Description 2", Status.IN_PROGRESS, Duration.ofMinutes(45), now.plusHours(1));
+        Task task3 = new Task(3, "Task 3", "Description 3", Status.DONE, Duration.ofMinutes(60), now.plusHours(2));
 
         historyManager.add(task1);
         historyManager.add(task2);
@@ -35,9 +38,10 @@ class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void addDuplicateTask_shouldMoveToEnd() {
-        Task task1 = new Task(1, "Task 1", "Description 1", Status.NEW);
-        Task task2 = new Task(2, "Task 2", "Description 2", Status.IN_PROGRESS);
+    void testAddDuplicateTask() {
+        LocalDateTime now = LocalDateTime.now();
+        Task task1 = new Task(1, "Task 1", "Description 1", Status.NEW, Duration.ofMinutes(30), now);
+        Task task2 = new Task(2, "Task 2", "Description 2", Status.IN_PROGRESS, Duration.ofMinutes(45), now.plusHours(1));
 
         historyManager.add(task1);
         historyManager.add(task2);
@@ -50,9 +54,10 @@ class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void removeTask_shouldRemoveFromHistory() {
-        Task task1 = new Task(1, "Task 1", "Description 1", Status.NEW);
-        Task task2 = new Task(2, "Task 2", "Description 2", Status.IN_PROGRESS);
+    void testRemoveTask() {
+        LocalDateTime now = LocalDateTime.now();
+        Task task1 = new Task(1, "Task 1", "Description 1", Status.NEW, Duration.ofMinutes(30), now);
+        Task task2 = new Task(2, "Task 2", "Description 2", Status.IN_PROGRESS, Duration.ofMinutes(45), now.plusHours(1));
 
         historyManager.add(task1);
         historyManager.add(task2);
@@ -64,8 +69,9 @@ class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void removeNonExistentTask_shouldDoNothing() {
-        Task task1 = new Task(1, "Task 1", "Description 1", Status.NEW);
+    void testRemoveNonExistentTask() {
+        LocalDateTime now = LocalDateTime.now();
+        Task task1 = new Task(1, "Task 1", "Description 1", Status.NEW, Duration.ofMinutes(30), now);
         historyManager.add(task1);
         historyManager.remove(9);
 
@@ -75,27 +81,31 @@ class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void addNullTask_shouldNotAddToHistory() {
+    void testAddNullTask() {
         historyManager.add(null);
         List<Task> history = historyManager.getHistory();
         assertTrue(history.isEmpty(), "History should be empty when null task is added");
     }
 
     @Test
-    void preservesTaskDataInHistory() {
-        Task task = new Task(1, "Task 1", "Description 1", Status.NEW);
+    void testPreservesTaskDataInHistory() {
+        LocalDateTime now = LocalDateTime.now();
+        Task task = new Task(1, "Task 1", "Description 1", Status.NEW, Duration.ofMinutes(30), now);
         historyManager.add(task);
         List<Task> history = historyManager.getHistory();
         Task fromHistory = history.get(0);
         assertEquals(task.getName(), fromHistory.getName(), "Task name should be preserved");
         assertEquals(task.getDescription(), fromHistory.getDescription(), "Task description should be preserved");
         assertEquals(task.getStatus(), fromHistory.getStatus(), "Task status should be preserved");
+        assertEquals(task.getDuration(), fromHistory.getDuration(), "Task duration should be preserved");
+        assertEquals(task.getStartTime(), fromHistory.getStartTime(), "Task startTime should be preserved");
     }
 
     @Test
-    void unlimitedHistoryCapacity() {
+    void testUnlimitedHistoryCapacity() {
+        LocalDateTime now = LocalDateTime.now();
         for (int i = 1; i <= 100; i++) {
-            Task task = new Task(i, "Task " + i, "Description " + i, Status.NEW);
+            Task task = new Task(i, "Task " + i, "Description " + i, Status.NEW, Duration.ofMinutes(30), now.plusHours(i));
             historyManager.add(task);
         }
         List<Task> history = historyManager.getHistory();
