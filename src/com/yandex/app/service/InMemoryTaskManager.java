@@ -21,53 +21,6 @@ public class InMemoryTaskManager implements TaskManager {
     });
     private final Map<LocalDateTime, Boolean> timeSlots = new HashMap<>();
 
-    private int generateId() {
-        return ++id;
-    }
-
-    public boolean isOverlapping(Task task1, Task task2) {
-        if (task1.getStartTime() == null || task1.getDuration() == null ||
-                task2.getStartTime() == null || task2.getDuration() == null) {
-            return false;
-        }
-        LocalDateTime start1 = task1.getStartTime();
-        LocalDateTime end1 = task1.getEndTime();
-        LocalDateTime start2 = task2.getStartTime();
-        LocalDateTime end2 = task2.getEndTime();
-        return !(end1.isBefore(start2) || end2.isBefore(start1));
-    }
-
-    public boolean hasOverlap(Task task) {
-        return prioritizedTasks.stream()
-                .filter(t -> t.getStartTime() != null && t.getDuration() != null)
-                .anyMatch(t -> isOverlapping(task, t));
-    }
-
-    private void reserveTimeSlots(Task task) {
-        if (task.getStartTime() == null || task.getDuration() == null) return;
-        LocalDateTime start = task.getStartTime();
-        LocalDateTime end = task.getEndTime();
-        LocalDateTime current = start.truncatedTo(ChronoUnit.MINUTES);
-        while (current.isBefore(end) || current.equals(end)) {
-            if (timeSlots.getOrDefault(current, false)) {
-                throw new IllegalStateException("Time slot already reserved");
-            }
-            timeSlots.put(current, true);
-            current = current.plusMinutes(15);
-        }
-    }
-
-    private void freeTimeSlots(Task task) {
-        if (task.getStartTime() == null || task.getDuration() == null) return;
-        LocalDateTime start = task.getStartTime();
-        LocalDateTime end = task.getEndTime();
-        LocalDateTime current = start.truncatedTo(ChronoUnit.MINUTES);
-        while (current.isBefore(end) || current.equals(end)) {
-            timeSlots.remove(current);
-            current = current.plusMinutes(15);
-        }
-    }
-
     @Override
     public int addTask(Task task) {
         if (task.getStartTime() != null && task.getDuration() != null && hasOverlap(task)) {
@@ -332,6 +285,53 @@ public class InMemoryTaskManager implements TaskManager {
 
     public List<Task> getPrioritizedTasks() {
         return new ArrayList<>(prioritizedTasks);
+    }
+
+    private boolean hasOverlap(Task task) {
+        return prioritizedTasks.stream()
+                .filter(t -> t.getStartTime() != null && t.getDuration() != null)
+                .anyMatch(t -> isOverlapping(task, t));
+    }
+
+    private boolean isOverlapping(Task task1, Task task2) {
+        if (task1.getStartTime() == null || task1.getDuration() == null ||
+                task2.getStartTime() == null || task2.getDuration() == null) {
+            return false;
+        }
+        LocalDateTime start1 = task1.getStartTime();
+        LocalDateTime end1 = task1.getEndTime();
+        LocalDateTime start2 = task2.getStartTime();
+        LocalDateTime end2 = task2.getEndTime();
+        return !(end1.isBefore(start2) || end2.isBefore(start1));
+    }
+
+    private int generateId() {
+        return ++id;
+    }
+
+    private void reserveTimeSlots(Task task) {
+        if (task.getStartTime() == null || task.getDuration() == null) return;
+        LocalDateTime start = task.getStartTime();
+        LocalDateTime end = task.getEndTime();
+        LocalDateTime current = start.truncatedTo(ChronoUnit.MINUTES);
+        while (current.isBefore(end) || current.equals(end)) {
+            if (timeSlots.getOrDefault(current, false)) {
+                throw new IllegalStateException("Time slot already reserved");
+            }
+            timeSlots.put(current, true);
+            current = current.plusMinutes(15);
+        }
+    }
+
+    private void freeTimeSlots(Task task) {
+        if (task.getStartTime() == null || task.getDuration() == null) return;
+        LocalDateTime start = task.getStartTime();
+        LocalDateTime end = task.getEndTime();
+        LocalDateTime current = start.truncatedTo(ChronoUnit.MINUTES);
+        while (current.isBefore(end) || current.equals(end)) {
+            timeSlots.remove(current);
+            current = current.plusMinutes(15);
+        }
     }
 
     private void updateEpicStatus(Epic epic) {
