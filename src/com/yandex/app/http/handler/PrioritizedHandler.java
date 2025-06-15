@@ -1,17 +1,16 @@
 package com.yandex.app.http.handler;
 
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.yandex.app.service.TaskManager;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 
 public class PrioritizedHandler extends BaseHttpHandler implements HttpHandler {
     private final TaskManager taskManager;
 
-    public PrioritizedHandler(TaskManager taskManager, Gson gson) {
-        super(gson);
+    public PrioritizedHandler(TaskManager taskManager) {
         this.taskManager = taskManager;
     }
 
@@ -22,7 +21,7 @@ public class PrioritizedHandler extends BaseHttpHandler implements HttpHandler {
 
         try {
             if (method.equals("GET") && path.equals("/prioritized")) {
-                sendText(exchange, gson.toJson(taskManager.getPrioritizedTasks()), 200);
+                sendText(exchange, gson.toJson(taskManager.getPrioritizedTasks()), HttpURLConnection.HTTP_OK);
             } else {
                 sendNotFound(exchange);
             }

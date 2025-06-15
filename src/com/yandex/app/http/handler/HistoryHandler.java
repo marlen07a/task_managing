@@ -1,17 +1,16 @@
 package com.yandex.app.http.handler;
 
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.yandex.app.service.TaskManager;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 
 public class HistoryHandler extends BaseHttpHandler implements HttpHandler {
     private final TaskManager taskManager;
 
-    public HistoryHandler(TaskManager taskManager, Gson gson) {
-        super(gson);
+    public HistoryHandler(TaskManager taskManager) {
         this.taskManager = taskManager;
     }
 
@@ -22,7 +21,7 @@ public class HistoryHandler extends BaseHttpHandler implements HttpHandler {
 
         try {
             if (method.equals("GET") && path.equals("/history")) {
-                sendText(exchange, gson.toJson(taskManager.getHistory()), 200);
+                sendText(exchange, gson.toJson(taskManager.getHistory()), HttpURLConnection.HTTP_OK);
             } else {
                 sendNotFound(exchange);
             }

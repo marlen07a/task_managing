@@ -1,6 +1,7 @@
 package com.yandex.app.http;
 
 import com.google.gson.Gson;
+import com.yandex.app.http.util.GsonUtils;
 import com.yandex.app.model.Task;
 import com.yandex.app.model.Status;
 import com.yandex.app.service.InMemoryTaskManager;
@@ -29,7 +30,7 @@ public class HistoryHandlerTest {
     public void setUp() throws IOException {
         taskManager = new InMemoryTaskManager();
         taskServer = new HttpTaskServer(taskManager);
-        gson = HttpTaskServer.getGson();
+        gson = GsonUtils.getGson();
         client = HttpClient.newHttpClient();
         taskManager.clearTasks();
         taskManager.clearSubtasks();

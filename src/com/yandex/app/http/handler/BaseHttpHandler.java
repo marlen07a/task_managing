@@ -2,15 +2,16 @@ package com.yandex.app.http.handler;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
+import com.yandex.app.http.util.GsonUtils;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 
 public abstract class BaseHttpHandler {
-    protected final Gson gson;
+    protected final Gson gson = GsonUtils.getGson();
 
-    protected BaseHttpHandler(Gson gson) {
-        this.gson = gson;
+    protected BaseHttpHandler() {
     }
 
     protected void sendText(HttpExchange exchange, String text, int statusCode) throws IOException {
@@ -22,15 +23,15 @@ public abstract class BaseHttpHandler {
     }
 
     protected void sendNotFound(HttpExchange exchange) throws IOException {
-        sendText(exchange, "{\"error\": \"Resource not found\"}", 404);
+        sendText(exchange, "{\"error\": \"Resource not found\"}", HttpURLConnection.HTTP_NOT_FOUND);
     }
 
     protected void sendHasInteractions(HttpExchange exchange) throws IOException {
-        sendText(exchange, "{\"error\": \"Task overlaps with existing tasks\"}", 406);
+        sendText(exchange, "{\"error\": \"Task overlaps with existing tasks\"}", HttpURLConnection.HTTP_NOT_ACCEPTABLE);
     }
 
     protected void sendServerError(HttpExchange exchange, String message) throws IOException {
-        sendText(exchange, "{\"error\": \"" + message + "\"}", 500);
+        sendText(exchange, "{\"error\": \"" + message + "\"}", HttpURLConnection.HTTP_INTERNAL_ERROR);
     }
 
     protected int getIdFromPath(HttpExchange exchange) {
@@ -43,3 +44,6 @@ public abstract class BaseHttpHandler {
         }
     }
 }
+
+
+
