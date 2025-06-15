@@ -14,7 +14,8 @@ public class GsonUtils {
             .registerTypeAdapter(Duration.class, new DurationAdapter())
             .create();
 
-    private GsonUtils() {}
+    private GsonUtils() {
+    }
 
     public static Gson getGson() {
         return GSON;
